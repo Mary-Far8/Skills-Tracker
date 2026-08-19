@@ -137,5 +137,5 @@ skills_list.pack(pady=10)
 
 
 connection.commit()
-connection.close()
 skills_Tracker.mainloop()
+connection.close()
