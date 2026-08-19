@@ -42,6 +42,6 @@ Building this project helped me practice:
 
 ## Roadmap
 
-- [ ] Add a GUI front-end (tkinter)
+- [x] Add a GUI front-end (tkinter)
 - [ ] Add progress visualization / charts
 - [ ] Export progress history to CSV
