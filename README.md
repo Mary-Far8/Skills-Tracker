@@ -10,13 +10,13 @@ Skills Tracker lets you log the skills you're working on, update your progress a
 
 - Add new skills to track
 - Log and update progress over time
-- Automatic persistence via SQLite — no manual saving needed
+- Automatic persistence via SQLite , no manual saving needed
 - Update existing entries without losing history
 
 ## Tech Stack
 
-- **Python** — core application logic
-- **SQLite** — local, persistent data storage
+- **Python** : core application logic
+- **SQLite** : local, persistent data storage
 
 ## Getting Started
 
@@ -45,6 +45,3 @@ Building this project helped me practice:
 - [ ] Add a GUI front-end (tkinter)
 - [ ] Add progress visualization / charts
 - [ ] Export progress history to CSV
-
----
-*This project is part of my ongoing journey toward becoming a software/AI engineer.*
