@@ -3,10 +3,20 @@ from tkinter import *
 from tkinter import messagebox
 
 
-# connect to (or create) the skills database file
-connection = sqlite3.connect("skills.db")
-# cursor is the tool used to run SQL commands through the connection
+import psycopg2
+
+connection= psycopg2.connect(host="localhost",
+                             dbname="skills_tracker",
+                             user='postgres',
+                             password="mary*Far8",
+                             port=5432)
 cursor = connection.cursor()
+cursor.execute("SELECT version();")
+
+# connect to (or create) the skills database file
+#connection = sqlite3.connect("skills.db")
+# cursor is the tool used to run SQL commands through the connection
+#cursor = connection.cursor()
 
 
 
@@ -14,14 +24,14 @@ cursor = connection.cursor()
 # id = auto-numbered unique identifier for each row
 # name = the skill's name, must be unique (no duplicate skill names allowed)
 # progress = a number representing progress on that skill
-cursor.execute(
-     """CREATE TABLE IF NOT EXISTS skills(
-                  id INTEGER PRIMARY KEY,
-                 name TEXT UNIQUE,
-                  progress INTEGER
-                  )
+# cursor.execute(
+#      """CREATE TABLE IF NOT EXISTS skills(
+#                   id INTEGER PRIMARY KEY,
+#                  name TEXT UNIQUE,
+#                   progress INTEGER
+#                   )
 
-                 """)
+#                  """)
 
 
 # create the main app window
@@ -64,60 +74,78 @@ progress_entry.pack(anchor="w", pady=5)
 
 # inserts a new skill into the database
 # if the name already exists (UNIQUE constraint), catches the error instead of crashing
-def add_skills() :
+def add_skill_to_db(cursor, connection, name, progress) :
+    try:
+        cursor.execute('INSERT INTO skills (name, progress) VALUES (%s, %s)', (name, progress))
+        connection.commit()
+        return True
+    except psycopg2.errors.UniqueViolation:
+        connection.rollback()
+        return False
 
+def add_skills():
     name = skill_name.get()
     progress = progress_value.get()
-    
-    try:
-      #add it to the database
-      cursor.execute('INSERT INTO skills (name,progress) VALUES (?, ?)', (name, progress)) 
-      # add it to the listbox
-      skills_list.insert("end", f"{name} ==> {progress}")
-
-    except sqlite3.IntegrityError :
-       print(f"'{name}' already exists — skipping.")
-    connection.commit()
+    success = add_skill_to_db(cursor, connection, name, progress) 
+    if success:
+        skills_list.insert("end", f"{name} ==> {progress}")
+    else:
+        print(f"'{name}' already exists — skipping.")
 
 
+def get_all_skills(cursor) :
+    cursor.execute("SELECT * FROM skills")
+    rows = cursor.fetchall()
+    return rows 
 
 def refresh_skills_list():
     skills_list.delete(0, END)
-    cursor.execute("SELECT * FROM skills")
-    rows = cursor.fetchall()
+    rows = get_all_skills(cursor)
     for row in rows:
         skill_id, name, progress = row
         skills_list.insert(END, f"{name} ==> {progress}")
 
 # updates an existing skill's progress value
 # rowcount == 0 means no skill with that name was found
+
+def update_skills_in_db(connection , cursor , name, new_progress):
+    cursor.execute('UPDATE skills SET progress = %s WHERE name = %s', (new_progress, name))
+    connection.commit()
+    updated = cursor.rowcount > 0
+    return updated
+
+
 def update_skills():
     name = skill_name.get()
     new_progress = progress_value.get()
-    cursor.execute('UPDATE skills SET progress = ? WHERE name = ?', (new_progress, name))
-    if cursor.rowcount == 0:
+    success = update_skills_in_db(connection , cursor , name, new_progress)
+    if success :
+        skills_list.insert("end", f"{name} ==> {new_progress}")
+    else :
         messagebox.showerror(message=f"the skill {name} does not exist")
-    connection.commit()
     refresh_skills_list()
 
 # deletes a skill from the database by name
 # rowcount == 0 means no skill with that name was found
+
+
+def delete_skills_from_db(cursor,connection,name):
+    cursor.execute('DELETE FROM skills WHERE name = %s', (name,))
+    deleted = cursor.rowcount > 0
+    connection.commit()
+    return deleted 
+
+
 def delete_skills():
     name = skill_name.get()
-    cursor.execute('DELETE FROM skills WHERE name = ?', (name,))
-    if cursor.rowcount == 0:
+    success = delete_skills_from_db(cursor,connection,name)
+    if not success :
         messagebox.showerror(message=f"{name} does not exist")
     connection.commit()
     refresh_skills_list()
    
-    connection.commit()
 
     
-      
-
-
-
-
 
 button1 = Button(skills_Tracker, bg="#F7EAE0",fg='black', font=('Arial',12,'bold'),borderwidth=0, text='add skill', command= add_skills)
 button2 = Button(skills_Tracker, bg="#F7EAE0",fg='black', font=('Arial',12,'bold'),borderwidth=0, text='update skill', command= update_skills)
@@ -136,6 +164,6 @@ skills_list.pack(pady=10)
 
 
 
-connection.commit()
-skills_Tracker.mainloop()
-connection.close()
+if __name__ == "__main__":
+    skills_Tracker.mainloop()
+    connection.close()
