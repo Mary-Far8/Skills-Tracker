@@ -1,5 +1,4 @@
 import pytest
-import sqlite3
 import psycopg2
 from Skills_Tracker import add_skill_to_db
 from Skills_Tracker import delete_skills_from_db
