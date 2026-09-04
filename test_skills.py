@@ -25,7 +25,7 @@ def db_connection():
 
 
 def test_add_skill_to_db(db_connection):
-    print(db_connection)          # <-- add this temporarily, just to SEE what it is
+    print(db_connection)          
     cursor, conn = db_connection
     result = add_skill_to_db(cursor, conn, 'python', 1)
     assert result == True 
